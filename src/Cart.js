@@ -1,4 +1,52 @@
+import React, { useEffect, useState } from "react";
+
 function Cart() {
+
+    function RemoveCartLines(id){
+        function removeL(id) {
+            fetch("https://shopify6.interplay.iterate.ai/removeCartLines", {
+                                method: "POST",
+                                headers: {"Content-type": "application/json"},
+                                body : JSON.stringify({
+                                    cartId: "gid://shopify/Cart/c1-99f857a6005c27bf76a645c25bf972b0",
+                                    lineIds: [
+                                        id
+                                    ] 
+                                })
+                            })
+                            .then((response) => {
+                                if (response.ok) {
+                                  console.log("API call successful");
+                                } else {
+                                  throw new Error("API call failed");
+                                }
+                              })
+                              .catch((error) => {
+                                console.log(error);
+                              });
+        }
+        removeL(id);
+    }
+    
+    const [data, setData]=useState([]);
+    const [subtotal, setSubtotal]=useState([]);
+    const [total, settotal]=useState([]);
+    useEffect(()=>{
+        async function fetchData() {
+            let product =await fetch("https://shopify6.interplay.iterate.ai/cartById", {
+                                method: "POST",
+                                headers: {"Content-type": "application/json"},
+                                body : JSON.stringify({
+                                    id : "gid://shopify/Cart/c1-99f857a6005c27bf76a645c25bf972b0" 
+                                })
+                            });
+            let result = await product.json();
+            setData(result.data.cart.lines.edges);
+            setSubtotal(result.data.cart.cost.subtotalAmount);
+            settotal(result.data.cart.cost.totalAmount);
+          }
+          fetchData();
+    },[])
     return (
         <div className="checkout-container">
             <section class="page-header">
@@ -41,38 +89,43 @@ function Cart() {
                                     <th class="product-remove"> </th>
                                 </tr>
                                 </thead>
-        
+                        {
+                            data.map((item)=>
                                 <tbody>
                                 <tr class="cart_item">
                                     <td class="product-thumbnail" data-title="Thumbnail">
-                                        <a href="/product-single"><img src="assets/images/cart-1.jpg" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail" alt="" /></a>
+                                        <a href="/product-single"><img src={item.node.merchandise.image.url} class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail" alt="" /></a>
                                     </td>
         
                                     <td class="product-name" data-title="Product">
-                                        <a href="#">Trendy Cloth</a>
+                                        <a href="#">{item.node.merchandise.product.title}</a>
                                     </td>
         
                                     <td class="product-price" data-title="Price">
                                         <span class="amount"><span class="currencySymbol"><pre wp-pre-tag-3=""></pre>
-        </span>90.00</span>
+        </span>${item.node.merchandise.price.amount}</span>
                                     </td>
                                     <td class="product-quantity" data-title="Quantity">
                                         <div class="quantity">
                                             <label class="sr-only" >Quantity</label>
-                                            <input type="number" id="qty" class="input-text qty text" step="1" min="0" max="9" title="Qty" size="4"  />
+                                            <input type="number" id="qty" class="input-text qty text" step="1" value={item.node.quantity} title="Qty" size="4"  />
                                         </div>
+                                        
                                     </td>
                                     <td class="product-subtotal" data-title="Total">
                                         <span class="amount">
                                             <span class="currencySymbol">
         <pre wp-pre-tag-3=""></pre>
-                                            </span>90.00</span>
+                                            </span>${parseInt(item.node.quantity*item.node.merchandise.price.amount)}</span>
                                     </td>
                                     <td class="product-remove" data-title="Remove">
-                                        <a href="#" class="remove" aria-label="Remove this item" data-product_id="30" data-product_sku="">×</a>
+                                        <a href="#" className="remove" aria-label="Remove this item" data-product_id="30" data-product_sku="" onClick={() => RemoveCartLines(item.node.id)}>×</a>
                                     </td>
                                 </tr>
-                                <tr class="cart_item">
+                                </tbody>
+                                )
+                        }
+                                {/* <tr class="cart_item">
                                     <td class="product-thumbnail" data-title="Thumbnail">
                                         <a href="/product-single"><img src="assets/images/cart-2.jpg" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail" alt="" /></a>
                                     </td>
@@ -99,8 +152,8 @@ function Cart() {
                                     <td class="product-remove" data-title="Remove">
                                         <a href="#" class="remove" aria-label="Remove this item" data-product_id="30" data-product_sku="">×</a>
                                     </td>
-                                </tr>
-                                <tr>
+                                </tr> */}
+                                {/* <tr>
                                     <td colspan="6" class="actions">
                                         <div class="coupon">
                                             <input type="text" name="coupon_code" class="input-text form-control" id="coupon_code" value="" placeholder="Coupon code" /> 
@@ -112,8 +165,8 @@ function Cart() {
                                         <input type="hidden" id="woocommerce-cart-nonce" name="woocommerce-cart-nonce" value="27da9ce3e8" />
                                         <input type="hidden" name="_wp_http_referer" value="/cart/" />
                                         </td>
-                                </tr>
-                                </tbody>
+                                </tr> */}
+                                
                             </table>
                         </form>
                     </div>
@@ -126,7 +179,7 @@ function Cart() {
                         <ul class="list-unstyled mb-4">
                             <li class="d-flex justify-content-between pb-2 mb-3">
                             <h5>Subtotal</h5>
-                            <span>$90.00</span>
+                            <span>${subtotal.amount}</span>
                             </li>
                             <li class="d-flex justify-content-between pb-2 mb-3">
                             <h5>Shipping</h5>
@@ -134,7 +187,7 @@ function Cart() {
                             </li>
                             <li class="d-flex justify-content-between pb-2">
                             <h5>Total</h5>
-                            <span>$90.00</span>
+                            <span>${total.amount}</span>
                             </li>
                         </ul>
                         <a href="#" class="btn btn-main btn-small">Proceed to checkout</a>
@@ -146,4 +199,5 @@ function Cart() {
         </div>
     )
 }
+
 export default Cart
