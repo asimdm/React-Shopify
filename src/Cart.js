@@ -2,13 +2,89 @@ import React, { useEffect, useState } from "react";
 
 function Cart() {
 
+    function decrease(variantId,quantity,cartLineId){
+        function removeLine(variantId,cartLineID,quantity) {
+            fetch("https://shopify6.interplay.iterate.ai/removeCartLines", {
+                                method: "POST",
+                                headers: {"Content-type": "application/json"},
+                                body : JSON.stringify({
+                                    cartId: "gid://shopify/Cart/c1-99f857a6005c27bf76a645c25bf972b0",
+                                    lineIds: [
+                                        cartLineID
+                                    ]
+                                })
+                            })
+                            .then((response) => {
+                                if (response.ok) {
+                                  console.log("API call successful");
+                                  fetch("https://shopify6.interplay.iterate.ai/addCartLines", {
+                                method: "POST",
+                                headers: {"Content-type": "application/json"},
+                                body : JSON.stringify({
+                                    cartId: "gid://shopify/Cart/c1-99f857a6005c27bf76a645c25bf972b0",
+                                    lines: {
+                                        merchandiseId: variantId,
+                                        quantity: quantity - 1
+                                      } 
+                                })
+                            })
+                            .then((response) => {
+                                if (response.ok) {
+                                  console.log("API call successful");
+                                  window.location.reload();
+                                } else {
+                                  throw new Error("API call failed");
+                                }
+                              })
+                              .catch((error) => {
+                                console.log(error);
+                              });
+                                } else {
+                                  throw new Error("API call failed");
+                                }
+                              })
+                              .catch((error) => {
+                                console.log(error);
+                              });
+        }
+        removeLine(variantId,cartLineId,quantity);
+    }
+
+    function addQauntity(variantId){
+        function reduceQuantity(variantId) {
+            fetch("https://shopify6.interplay.iterate.ai/addCartLines", {
+                                method: "POST",
+                                headers: {"Content-type": "application/json"},
+                                body : JSON.stringify({
+                                    cartId: "gid://shopify/Cart/c1-99f857a6005c27bf76a645c25bf972b0",
+                                    lines: {
+                                        merchandiseId: variantId,
+                                        quantity: 1
+                                      } 
+                                })
+                            })
+                            .then((response) => {
+                                if (response.ok) {
+                                  console.log("API call successful");
+                                  window.location.reload();
+                                } else {
+                                  throw new Error("API call failed");
+                                }
+                              })
+                              .catch((error) => {
+                                console.log(error);
+                              });
+        }
+        reduceQuantity(variantId);
+    }
+
     function RemoveCartLines(id){
         function removeL(id) {
             fetch("https://shopify6.interplay.iterate.ai/removeCartLines", {
                                 method: "POST",
                                 headers: {"Content-type": "application/json"},
                                 body : JSON.stringify({
-                                    cartId: "gid://shopify/Cart/c1-99f857a6005c27bf76a645c25bf972b0",
+                                    cartId: "gid://shopify/Cart//* c1-99f857a6005c27bf76a645c25bf972b0 */",
                                     lineIds: [
                                         id
                                     ] 
@@ -17,6 +93,7 @@ function Cart() {
                             .then((response) => {
                                 if (response.ok) {
                                   console.log("API call successful");
+                                  window.location.reload();
                                 } else {
                                   throw new Error("API call failed");
                                 }
@@ -37,7 +114,7 @@ function Cart() {
                                 method: "POST",
                                 headers: {"Content-type": "application/json"},
                                 body : JSON.stringify({
-                                    id : "gid://shopify/Cart/c1-99f857a6005c27bf76a645c25bf972b0" 
+                                    id : "gid://shopify/Cart//* c1-99f857a6005c27bf76a645c25bf972b0 */" 
                                 })
                             });
             let result = await product.json();
@@ -106,17 +183,19 @@ function Cart() {
         </span>${item.node.merchandise.price.amount}</span>
                                     </td>
                                     <td class="product-quantity" data-title="Quantity">
-                                        <div class="quantity">
+                                    <a href="#" onClick={()=>decrease(item.node.merchandise.id,item.node.quantity,item.node.id)}>-</a>
+                                        <label style={{"marginLeft":"10px", "marginRight":"10px"}}>{item.node.quantity}</label>
+                                        {/* <div class="quantity">
                                             <label class="sr-only" >Quantity</label>
                                             <input type="number" id="qty" class="input-text qty text" step="1" value={item.node.quantity} title="Qty" size="4"  />
-                                        </div>
-                                        
+                                        </div> */}
+                                        <a href="#" onClick={()=>addQauntity(item.node.merchandise.id)}>+</a>
                                     </td>
                                     <td class="product-subtotal" data-title="Total">
                                         <span class="amount">
                                             <span class="currencySymbol">
         <pre wp-pre-tag-3=""></pre>
-                                            </span>${parseInt(item.node.quantity*item.node.merchandise.price.amount)}</span>
+                                            </span>${parseFloat(item.node.quantity*item.node.merchandise.price.amount)}</span>
                                     </td>
                                     <td class="product-remove" data-title="Remove">
                                         <a href="#" className="remove" aria-label="Remove this item" data-product_id="30" data-product_sku="" onClick={() => RemoveCartLines(item.node.id)}>×</a>
